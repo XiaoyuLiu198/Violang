@@ -7,6 +7,8 @@ const Spec = [
     [/^\d+/, 'NUMBER'],
     [/^"[^"]*"/, 'STRING''],
     [/^''[^']*'/, 'STRING''],
+    [/^=/, 'SIMPLE_ASSIGN'],
+    [/^[\*\/\+\-]=/, 'COMPLEX_ASSIGN'],
 ]
 
 class Tokenizer{

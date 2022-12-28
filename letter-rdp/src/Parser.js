@@ -49,16 +49,48 @@ class Parser{
         return statementList;
     }
 
+    /**
+    * Statement
+    *   :  ExpressionStatement
+    *   |  BlockStatement
+    *   |  EmptyStatement
+    *   |  VariableStatement
+    *   ;
+    */
     Statement(){
     switch (this._lookahead.type) {
+        case ";":
+            return EmptyStatement();
         case '{':
             return this.BlockStatement();
+        case 'let':
+            return this.VariableStatement();
         default:
             return this.ExpressionStatement();
     }
-        return this.ExpressionStatement();
     }
 
+    /**
+    * VariableStatement
+    *   :  'let' VariableDeclarationList ';'
+    *   ;
+    */
+    VariableStatement(){
+        this._eat('let');
+        const declarations = this.VariableDeclarationList();
+        this._eat(';')
+        return {
+            type: 'VariableStatement',
+            declarations,
+        };
+    }
+
+    EmptyStatement(){
+        this._eat(';');
+        return{
+            type: 'EmptyStatement',
+        };
+    }
 
     /**
     * Block
@@ -87,7 +119,7 @@ class Parser{
 
     /**
     * Expression
-    *   :  Literal
+    *   :  AssignmentExpression
         ;
     */
     Expression(){
@@ -139,7 +171,7 @@ class Parser{
     }
 
     AssignmentOperator(){
-        if (this._lookahead.type ==== 'SIMPLE_ASSIGN'){
+        if (this._lookahead.type === 'SIMPLE_ASSIGN'){
             return this._eat('SIMPLE_ASSIGN');
         }
         return this._eat('COMPLEX_ASSIGN');
@@ -179,12 +211,19 @@ class Parser{
     *   ;
     */
     PrimaryExpression() {
+        if (this._isLiteral(this._lookahead.type)){
+            return this.Literal();
+        }
         switch (this._lookahead.type) {
             case '(':
                 return this.ParentthesizedExpression();
             default:
                 return this.Literal();
         }
+    }
+
+    _isLiteral(tokenType){
+        return tokenType === 'NUMBER' || tokenType === 'STRING';
     }
 
    /**

@@ -47,7 +47,7 @@ class Tokenizer{
         }
 
         // Number token;
-        _match(regexp, string) {
+        _match(regexp, string){
             const matched = regexp.exec(string);
             if(matched == null){
                 return null;
@@ -67,34 +67,10 @@ class Tokenizer{
                 value: matched[0],
             };
         }
-
-//        if (!Number.isNaN(Number(string[0]))) {
-//            let number = '';
-//            while (!Number.isNaN(Number(string[this._cursor]))){
-//                number += string[this._cursor++];
-//            }
-//            return {
-//                type: 'NUMBER',
-//                value: number,
-//            };
-//        }
-
-        // String token
-//        if (string[0] === '"'){
-//            let s = '';
-//            do {
-//                s += string[this._cursor++];
-//            } while(string[this._cursor] !== '"' && !this.isEOF());
-//            this._cursor++;
-//            return {
-//                type: 'STRING';
-//                value: s,
-//              };
-//            }
             return null;
         }
 }
 
 module.exports = {
-    Tokenizer;
-}
+    Tokenizer,
+};

@@ -85,6 +85,41 @@ class Parser{
         };
     }
 
+    VariableDeclarationList(){
+        const declarations = [];
+
+        do {
+            declarations.push(this.VariableDeclaration());
+        } while (this._lookahead.type === ',' && this._eat(','));
+
+        return declarations;
+    }
+
+    /**
+    * VariableStatement
+    *   :  Identifier OptVariableInitializer
+    *   ;
+    */
+    VariableDeclaration(){
+        const id = this.Identifier();
+
+        const init = 
+          this._lookahead.type !== ';' && this._lookahead.type !== ','
+          ? this.VariableInitializer()
+          : null;
+
+        return {
+            type: 'VariableDeclaration',
+            id,
+            init,
+        };
+    }
+
+    VariableInitializer(){
+        this._eat('SIMPLE_ASSIGN');
+        return this.AssignmentExpression;
+    }
+
     EmptyStatement(){
         this._eat(';');
         return{

@@ -15,7 +15,7 @@
 
 class VioVM {
     public:
-        VioVM() {}
+        VioVM(): parser(std::make_unique<VioParser>()), compiler(std::make_unique<VioCompiler>()) {}
     
     // push value to stack
     void push(VioValue value) {
@@ -38,6 +38,7 @@ class VioVM {
     // execute
     void exec(const std::string& program) {
         // 1. parse the input program
+        auto ast = parser->parse(program);
 
         // 2. compile to machine bytecode
         constants.push_back(NUMBER(100));
@@ -72,13 +73,16 @@ class VioVM {
         }
     }
 
+    // add pointer
+    std::unique_ptr<VioParser> parser;
+
+    // add compiler
+    std::unique_ptr<VioCompiler> compiler;
+
     uint8_t* ip;
     VioValue* sp;
 
     //  Operands stack
     std::array<VioValue, STACK_LIMIT> stack;
-
-    //  constant pool
-    std::vector<VioValue> constants;
 
 }

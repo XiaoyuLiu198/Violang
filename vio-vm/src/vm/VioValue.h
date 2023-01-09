@@ -8,6 +8,11 @@ enum class VioValueType{
     NUMBER,
 };
 
+enum class ObjectType {
+    STRING,
+    CODE,
+};
+
 // VioValue
 struct VioValue
 {
@@ -15,6 +20,16 @@ struct VioValue
     union {
         double number;
     }
+};
+
+struct CodeObject : public Object {
+    CodeObject(const std::string& name) : Object(ObjectType::CODE), name(name) {}
+    
+    std::string name;
+    //  constant pool
+    std::vector<VioValue> constants;
+    //  bytecode
+    std::vector<uint8_t> code;
 };
 
 //  constructors

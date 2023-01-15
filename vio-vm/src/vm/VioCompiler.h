@@ -3,6 +3,21 @@
 #ifndef VioCompiler_h
 #define VioCompiler_h
 #include "VioValue.h"
+#include "../bytecode/OpCode.h"
+#include "../parser/VioParser.h"
+
+#define ALLOC_CONST(tester, converter, allocator, value) \
+    do {                                                 \
+        for (auto i=0; i < co->constants.size(); i++){   \
+            if(!tester(co->constants[i])){               \
+                continue;                                \
+            }                                            \
+            if(converter(co->constants[i] == value){     \
+                return i;                                \
+            }                                            \
+        }                                                \
+        co->constants.push_back(allocator(value));       \
+    } while (false)                                      \
 
 // compiler class
 class VioCompiler{
@@ -48,29 +63,13 @@ class VioCompiler{
 private:
     // allocate numeric constant
     size_t numericConstIdx(double value) {
-        for (auto i=0; i < co->constants.size(); i++){
-            if (!IS_NUMBER(co->constants[i])){
-                continue;
-            }
-            if (AS_NUMBER(co->constants[i]) == value){
-                return i;
-            }
-        }
-        co->constants.push_back(NUMBER(value));
+        ALLOC_CONST(IS_NUMBER, AS_NUMBER, NUMBER, value);
         return co->constants.size() - 1;
     }
 
     //  allocates string constant
     size_t stringConstIdx(const std::string& value) {
-        for (auto i=0; i < co->constants.size(); i++){
-            if (!IS_STRING(co->constants[i])){
-                continue;
-            }
-            if (AS_STRING(co->constants[i]) == value){
-                return i;
-            }
-        }
-        co->constants.push_back(ALLOC_STRING(value));
+        ALLOC_STRING(IS_STRING, AS_CPPSTRING, ALLOC_STRING, value);
         return co->constants.size() - 1;
     }
 

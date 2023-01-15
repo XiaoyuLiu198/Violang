@@ -1,6 +1,5 @@
 #include <string>
 #include <vector>
-
 #include "../Logger.h"
 #include "../bytecode/OpCode.h"
 #include "VioValue.h"
@@ -41,8 +40,7 @@ class VioVM {
         auto ast = parser->parse(program);
 
         // 2. compile to machine bytecode
-        constants.push_back(NUMBER(100));
-        code = {OP_CONST, 0, OP_HALT};
+        co = compiler->compile(ast);
 
         // 3. set instruction pointer to the begining
         ip = &code[0];
@@ -85,4 +83,9 @@ class VioVM {
     //  Operands stack
     std::array<VioValue, STACK_LIMIT> stack;
 
-}
+    // code object
+    CodeObject* co;
+
+};
+
+#endif

@@ -7,7 +7,7 @@ Build a simplified language from scratch - C++ and C
 ## Stack based VM
 Built as an interpreter of a special bytecode for execution on the CPU. 
 The main two data structures for a stack VM are the code listing, with the instruction pointer, and the stack data, which is accessed only via the stack pointer. 
-### Example: how to implement interpreter for if-else control flow on virtual machine
+#### Example: how to implement interpreter for if-else control flow on virtual machine
 Script input is "if(> 5 10) 1 2". In python it can be represented as "1 if 10 >5 else 2"
 
 The key of stack based VM for is-else control flow is that: we jump to corresponding lines when certain condition is satisfied. 

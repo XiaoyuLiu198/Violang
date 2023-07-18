@@ -3,7 +3,9 @@ Build a simplified language from scratch - C++.
 
 ### Example of the language
 (var x 15)
+
 (if (x>10) (set x (+ x 10)))
+
 (while (x<100) (set x (+ x 10)))
 
 ### Diagram of how scripts are interpreted

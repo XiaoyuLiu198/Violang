@@ -109,7 +109,7 @@ class VioCompiler {
           }
           // 2. Global vars
           else {
-            if (!globals->exists(exp.string)) {
+            if (!global->exists(exp.string)) {
               DIE << "[VioCompiler]: Reference error: " << exp.string;
               }
             emit(OP_GET_GLOBAL);
@@ -185,7 +185,7 @@ class VioCompiler {
             }
 
             // patch the end
-            auto endBranchAddr = getOffset()
+            auto endBranchAddr = getOffset();
             patchJumpAddress(endAddr, endBranchAddr);
           }
 
@@ -237,7 +237,7 @@ class VioCompiler {
             else {
               co->addLocal(varName);
               emit(OP_SET_LOCAL);
-              emit(global->getLocalIndex(varName));
+              emit(co->getLocalIndex(varName));
             }
           }
 
@@ -281,7 +281,7 @@ class VioCompiler {
                 emit(OP_POP);  
               }
             }
-            scopeExit();
+            // scopeExit();
           }
 
           else if (op=="def") {
@@ -371,19 +371,19 @@ class VioCompiler {
   /**
    * Exits a new scope
    */
-  void scopeExit() { 
-    auto varsCount = getVarsCountOnScopeExit();
+  // void scopeExit() { 
+  //   auto varsCount = getVarsCountOnScopeExit();
 
-    if (varsCount > 0 || co->arity > 0) {
-      emit(OP_SCOPE_EXIT);
+  //   if (varsCount > 0 || co->arity > 0) {
+  //     emit(OP_SCOPE_EXIT);
 
-      if (isFunctionBody()) {
-        varsCount+= co->arity+1;
-      }
-      emit(varsCount);
-    }
-    co->scopeLevel--; 
-  }
+  //     if (isFunctionBody()) {
+  //       varsCount+= co->arity+1;
+  //     }
+  //     emit(varsCount);
+  //   }
+  //   co->scopeLevel--; 
+  // }
 
   /**
    * Compiles a function.
@@ -575,15 +575,15 @@ class VioCompiler {
     // Implement here...
   }
 
-  /**
-   * Scope info.
-   */
-  std::map<const Exp*, std::shared_ptr<Scope>> scopeInfo_;
+  // /**
+  //  * Scope info.
+  //  */
+  // std::map<const Exp*, std::shared_ptr<Scope>> scopeInfo_;
 
-  /**
-   * Scopes stack.
-   */
-  std::stack<std::shared_ptr<Scope>> scopeStack_;
+  // /**
+  //  * Scopes stack.
+  //  */
+  // std::stack<std::shared_ptr<Scope>> scopeStack_;
 
   /**
    * Compiling code object.

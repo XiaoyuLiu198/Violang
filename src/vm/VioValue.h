@@ -8,6 +8,7 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <stdint.h>
 
 /**
  * Vio value type.
@@ -115,7 +116,7 @@ struct Object : public Traceable {
  */
 struct StringObject : public Object {
   StringObject(const std::string& str)
-    : Object(ObjectTyoe::STRING), string(str) {}
+    : Object(ObjectType::STRING), string(str) {}
   std::string string;
 };
 
@@ -199,7 +200,7 @@ struct CodeObject : public Object {
   }
 
   int getLocalIndex(const std::string& name) {
-    if (globals.size() > 0) {
+    if (global > 0) {
       for (auto i = (int)locals.size() - 1; i >= 0; i--) {
         if (locals[i].name == name) {
           return i;
@@ -258,9 +259,9 @@ struct FunctionObject : public Object {
 
 #define IS_NUMBER(evaValue) ((evaValue).type == VioValueType::NUMBER)
 #define IS_BOOLEAN(evaValue) ((evaValue).type == VioValueType::BOOLEAN)
-#define IS_STRING(evaValue) IS_OBJECT_TYPE(evaValue,  ObjectType::STRING)
-#define IS_CODE(evaValue) IS_OBJECT_TYPE(evaValue,  ObjectType::CODE)
-#define IS_NATIVE(evaValue) IS_OBJECT_TYPE(evaValue,  ObjectType::NATIVE)
+#define IS_STRING(evaValue) IS_OBJECT_TYPE(evaValue, ObjectType::STRING)
+#define IS_CODE(evaValue) IS_OBJECT_TYPE(evaValue, ObjectType::CODE)
+#define IS_NATIVE(evaValue) IS_OBJECT_TYPE(evaValue, ObjectType::NATIVE)
 // Implement here...
 
 // ----------------------------------------------------------------

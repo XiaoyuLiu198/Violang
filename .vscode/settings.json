@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "vector": "cpp",
+        "filesystem": "cpp",
+        "stack": "cpp"
+    }
+}

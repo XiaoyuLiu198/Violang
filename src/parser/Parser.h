@@ -14,9 +14,9 @@ enum class Symbols {
 
     NTS_S,
     NTS_E,
-    NTS_E',
+    NTS_E1,
     NTS_T,
-} 
+};
 
 struct Piece {
     Symbols symbol;
@@ -28,7 +28,7 @@ std::array<LexRule, 8> lexRules = {{
   {std::regex(R"(^\))"), Symbols::TS_R_PAREN},
   {std::regex(R"(^\s+)"), Symbols::TS_SPACE},
   {std::regex(R"(^"[^\"]*")"), Symbols::TS_STRING},
-  {std::regex(R"(^\d+)"), Symbols::TS_NUM},
+  {std::regex(R"(^\d+)"), Symbols::TS_NUMBER},
   {std::regex(R"(^[\w\-+*=!<>/]+)"), Symbols::TS_SYMBOL}
 }};
 
@@ -69,25 +69,24 @@ std::vector<int> calculateRules (const std::string str) {
         }
         else {
             std::cout << "Rule found";
-            int rule;
             Symbols symbol = lexer(strSlice).symbol;
-            auto last = ss[ss.size() - 1]
+            auto last = ss[ss.size() - 1];
             if (symbol !== Symbols::TS_R_PAREN && last == Symbols::NTS_S) {
-                rule = 0;
+                auto rule = 0;
             } else if (last == Symbols::NTS_E) {
-                rule = 1;
+                auto rule = 1;
             } else if ((symbol == Symbols::TS_EOS | symbol == Symbols::TS_R_PAREN) && last == Symbols::NTS_E) {
-                rule = 3;
-            } else if (symbol !== Symbols::TS_EOS && symbol !== Symbols::TS_R_PAREN && last == Symbols::NTS_E) {
-                rule = 2;
+                auto rule = 3;
+            } else if (symbol != Symbols::TS_EOS && symbol != Symbols::TS_R_PAREN && last == Symbols::NTS_E1) {
+                auto rule = 2;
             } else if (symbol == Symbols::TS_L_PAREN && last == Symbols::NTS_T) {
-                rule = 4;
+                auto rule = 4;
             } else if (symbol == Symbols::TS_NUMBER && last == Symbols::NTS_T) {
-                rule = 5;
+                auto rule = 5;
             } else if (symbol == Symbols::TS_STRING && last == Symbols::NTS_T) {
-                rule = 6;
+                auto rule = 6;
             } else if (symbol == Symbols::TS_SYMBOL && last == Symbols::NTS_T) {
-                rule = 7;
+                auto rule = 7;
             }
 
             switch (rule)

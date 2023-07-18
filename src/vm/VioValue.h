@@ -251,11 +251,12 @@ struct FunctionObject : public Object {
 #define AS_CPPSTRING(evaValue) (AS_STRING(evaValue) -> string)
 #define AS_CODE(evaValue) ((CodeObject*)(evaValue).object)
 #define AS_NATIVE(evaValue) ((NativeObject*)(evaValue).object)
+#define AS_OBJECT(evaValue) ((Object*) (evaValue).number)
 // ----------------------------------------------------------------
 // Testers:
 
-#define IS_OBJECT_TYPE(evaValue, objectType) \
-  (IS_OBJECT(evaValue) && AS_OBJECT(evaValue) -> type == ObjectType)
+#define IS_OBJECT_TYPE(evaValue, objectType) IS_OBJECT(evaValue)
+#define IS_OBJECT(evaValue) ((evaValue).type == VioValueType::OBJECT)
 
 #define IS_NUMBER(evaValue) ((evaValue).type == VioValueType::NUMBER)
 #define IS_BOOLEAN(evaValue) ((evaValue).type == VioValueType::BOOLEAN)

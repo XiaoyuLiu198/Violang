@@ -40,7 +40,7 @@
     }                                             \
     emit(OP_CALL);                                \ 
     emit(exp.list.size() - 1);                    \
-  } while (false)             
+  } while (false)                                 \
 /**
  * Compiler class, emits bytecode, records constant pool, vars, etc.
  */

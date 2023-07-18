@@ -2,7 +2,8 @@
 Build a simplified language from scratch - C++.
 
 ### Diagram of how scripts are interpreted
-<img width="697" alt="Screen Shot 2023-07-17 at 12 19 41 AM" src="https://github.com/XiaoyuLiu198/Violang/assets/65391883/dd22b409-6484-4b4d-8783-75d3b1dce775">
+<img width="697" alt="Screen Shot 2023-07-17 at 12 19 41 AM" src="https://github.com/XiaoyuLiu198/Violang/assets/65391883/878bb3a2-6821-44cb-9c25-0686c954451d">
+
 
 ### Parser
 Generated LALR(1) parser with the help of syntax_cli generator.

@@ -37,7 +37,7 @@ The main data structures for a stack VM are:
 #### Example: how to implement interpreter of an arithmetic expression
 Calculate ```(var x (+ x 10))``` after defining x as 15.
 
-<img width="372" alt="Screen Shot 2023-07-17 at 6 16 47 PM" src="https://github.com/XiaoyuLiu198/Violang/assets/65391883/7a76de83-fb45-40e5-9dbf-27d8ee57baed">
+<img width="372" alt="Screen Shot 2023-07-17 at 6 16 47 PM" src="https://github.com/XiaoyuLiu198/Violang/assets/65391883/2f5caf89-f659-49e2-820f-6e7973cd2ebc">
 
 
 - Step 1: Get variable x from variables with index, push to value stack

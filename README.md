@@ -1,6 +1,11 @@
 # Violang
 Build a simplified language from scratch - C++.
 
+### Example of the language
+(var x 15)
+(if (x>10) (set x (+ x 10)))
+(while (x<100) (set x (+ x 10)))
+
 ### Diagram of how scripts are interpreted
 <img width="697" alt="Screen Shot 2023-07-17 at 12 19 41 AM" src="https://github.com/XiaoyuLiu198/Violang/assets/65391883/878bb3a2-6821-44cb-9c25-0686c954451d">
 

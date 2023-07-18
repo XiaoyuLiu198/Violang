@@ -1,18 +1,25 @@
 # Violang
 Build a simplified language from scratch - C++.
 
-## Diagram of how scripts are interpreted
+### Diagram of how scripts are interpreted
 <img width="697" alt="Screen Shot 2023-07-17 at 12 19 41 AM" src="https://github.com/XiaoyuLiu198/Violang/assets/65391883/dd22b409-6484-4b4d-8783-75d3b1dce775">
 
-## Parser
+### Parser
 Generated LALR(1) parser with the help of syntax_cli generator.
 
-## Compiler
+Grammar: 
+- E -> A | L
+- L -> ( L' )
+- L' -> L' E
+- L' -> ε
+- A -> SYMBOL | NUMBER | STRING
+
+### Compiler
 Implemented compiler to improve execution efficiency by interpreting with bytecode instead of AST. The functionality of the compiler includes 
 - 1. Allocate objects and variables.
 - 2. Generate operator codes as instructions for virtual machine.
 
-## Stack based VM
+### Stack based VM
 Built as an interpreter of a special bytecode for execution on the CPU. 
 The main data structures for a stack VM are:
 - 1. Value stack maintaining calculated result.
@@ -30,7 +37,7 @@ Calculate ```(var x (+ x 10))``` after defining x as 15.
 - Step 3: add the top 2 values from value stack and push result back to value stack
 - Step 4: Set variable x as result 25
 
-## Mark-sweep Garbage collection
+### Mark-sweep Garbage collection
 
 In ```marking``` phase garbage collector starts by assuming that all objects in memory are garbage. It then identifies the root objects, suc h as global variables, local variables on the stack, and any other references that are known to be in use. Starting from the root objects, the garbage collector traverses the object graph, following references and marking all reachable objects as not garbage. 
 

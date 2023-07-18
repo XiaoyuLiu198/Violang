@@ -9,7 +9,7 @@ Build a simplified language from scratch - C++.
 (while (x<100) (set x (+ x 10)))
 
 ### Diagram of how scripts are interpreted
-<img width="700" alt="Screen Shot 2023-07-18 at 10 26 02 AM" src="https://github.com/XiaoyuLiu198/Violang/assets/65391883/f29ef9dd-6912-4fd9-91e7-0440915b2348">
+<img width="691" alt="Screen Shot 2023-07-18 at 10 33 47 AM" src="https://github.com/XiaoyuLiu198/Violang/assets/65391883/3930a951-55bf-48cf-8d67-78b7989f1d07">
 
 
 ### Parser

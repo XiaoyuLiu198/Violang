@@ -55,7 +55,7 @@ class VioCompiler {
    */
   void compile(const Exp& exp) {
     // allocate the new code object
-    co = AS_CODE(ALLOC_CODE("main", *exp.list.size()));
+    co = AS_CODE(ALLOC_CODE("main", exp.list.size()));
     // main = AS_FUNCTION(ALLOC_FUNCTION(co));
     // generate recursively from top-level
     gen(exp);

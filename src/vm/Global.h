@@ -18,6 +18,10 @@ struct GlobalVar {
  */
 struct Global {
   /**
+   * Global variables and functions.
+   */
+  std::vector<GlobalVar> globals;
+  /**
    * Returns a global.
    */
   GlobalVar& get(size_t index) { return globals[index]; }
@@ -30,31 +34,6 @@ struct Global {
       DIE << "Global " << index << "doesn't exist.";
     }
     globals[index].value = value;
-  }
-
-  /**
-   * Registers a global.
-   */
-  void define(const std::string& name) {
-    auto index = getGlobalIndex(name);
-
-    if (index != -1){
-      return;
-    }
-
-    // Set to default number
-    globals.push_back({name, NUMBER(0)})
-  }
-
-  /**
-   * Adds a native function.
-   */
-  void addNativeFunction(const std::string& name, std::function<void()> fn,
-                         size_t arity) {
-    if (exists(name)) {
-      return;
-    }
-    globals.push_back({name, ALLOC_NATIVE(fn, name, arity)});
   }
 
   /**
@@ -87,10 +66,31 @@ struct Global {
    */
   bool exists(const std::string& name) { return getGlobalIndex(name) != -1; }
 
-  /**
-   * Global variables and functions.
+    /**
+   * Registers a global.
    */
-  std::vector<GlobalVar> globals;
+  void define(const std::string& name) {
+    auto index = getGlobalIndex(name);
+
+    if (index != -1){
+      return;
+    }
+
+    // Set to default number
+    globals.push_back({name, NUMBER(0)});
+  }
+
+    /**
+   * Adds a native function.
+   */
+  void addNativeFunction(const std::string& name, std::function<void()> fn,
+                         size_t arity) {
+    if (exists(name)) {
+      return;
+    }
+    globals.push_back({name, ALLOC_NATIVE(fn, name, arity)});
+  }
+
 };
 
 #endif

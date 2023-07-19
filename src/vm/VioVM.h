@@ -90,7 +90,7 @@ using syntax::VioParser;
         res = v1 != v2;             \
         break;                      \
     }                               \
-    push(BOOLEAN(res));             \
+    push(AS_BOOLEAN(res));             \
   } while (false)
 
 // --------------------------------------------------
@@ -220,7 +220,6 @@ class VioVM {
     }
     return roots;
   }
-  }
 
   /**
    * Spawns a potential GC cycle.
@@ -254,7 +253,7 @@ class VioVM {
     fn = compiler->getMainFunction();
 
     // Set instruction pointer to the beginning:
-    ip = &fn->co->code[0];
+    ip = &fn ->co->code[0];
 
     // Init the stack:
     sp = &stack[0];
@@ -286,8 +285,8 @@ class VioVM {
 
         // math operations
         case OP_ADD: {
-          op1 = pop();
-          op2 = pop();
+          auto op1 = pop();
+          auto op2 = pop();
 
           if (IS_NUMBER(op1) && IS_NUMBER(op2)) {
             auto v2 = AS_NUMBER(op2); 
@@ -297,7 +296,7 @@ class VioVM {
           else if (IS_STRING(op1) && IS_STRING(op2)) {
             auto s1 = AS_CPPSTRING(op1); 
             auto s2 = AS_CPPSTRING(op2);
-            push(MEM(ALLOC_STRING(s1 + s2)))
+            push(MEM(ALLOC_STRING(s1 + s2)));
           }
           break;
         }
@@ -329,7 +328,7 @@ class VioVM {
           } else if (IS_STRING(op1) && IS_STRING(op2)) {
             auto s1 = AS_STRING(op1);
             auto s2 = AS_STRING(op2);
-            COMPARE_VALUES(op, s1, s2)
+            COMPARE_VALUES(op, s1, s2);
           }
           break;
         }
@@ -381,8 +380,7 @@ class VioVM {
           if (localIndex < 0 || localIndex >= stack.size()) {
             DIE << "OP_SET_LOCAL: invalid variable index: " << (int)localIndex;
           }
-          bp[localIndex] = value; 
-          popN(count);
+          bp[localIndex] = value;
           break;
         }
 
@@ -451,7 +449,6 @@ class VioVM {
         push(NUMBER(x * x));
       },
       1);
-    );
 
     global->addConst("VERSION", 1);
   }
@@ -507,15 +504,6 @@ class VioVM {
    */
   FunctionObject* fn;
 
-  // --------------------------------------------------
-  // Debug functions:
-
-  /**
-   * Dumps current stack.
-   */
-  void dumpStack() {
-    // Implement here...
-  }
 };
 
 #endif

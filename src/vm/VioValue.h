@@ -185,11 +185,12 @@ struct LocalVar {
  * state needed for function execution.
  */
 struct CodeObject : public Object {
-  CodeObject(const std::string& name) : Object(ObjectType::CODE), name(name) {}
+  CodeObject(const std::string& name, const int arity) : Object(ObjectType::CODE), name(name), arity(arity) {}
 
   std::string name;
   std::vector<VioValue> constants;
   std::vector<uin8_t> code;
+  int arity;
 
   size_t scopeLevel = 0;
 
@@ -200,7 +201,7 @@ struct CodeObject : public Object {
   }
 
   int getLocalIndex(const std::string& name) {
-    if (global > 0) {
+    if (name.size() > 0) {
       for (auto i = (int)locals.size() - 1; i >= 0; i--) {
         if (locals[i].name == name) {
           return i;
@@ -228,7 +229,8 @@ struct CellObject : public Object {
  * Function object.
  */
 struct FunctionObject : public Object {
-  // Implement here...
+  FunctionObject(CodeObject* co) : Object(ObjectType::FUNCTION), co(co) {}
+  CodeObject* co;
 };
 
 // ----------------------------------------------------------------
@@ -239,8 +241,8 @@ struct FunctionObject : public Object {
 #define ALLOC_STRING(value) ((VioValue){VioValueType::OBJECT, .object = (Object*) new StringObject(value)})
 
 #define ALLOC_CODE(name, arity) ((VioValue){VioValueType::OBJECT, .object = (Object*) new CodeObject(name, arity)})
-#define ALLOC_NATIVE(fn, name, arity) ((VioValue*){VioValueType::OBJECT, .object = (Object*)new NativeObject(fn, name, arity)})
-
+#define ALLOC_NATIVE(fn, name, arity) ((VioValue){VioValueType::OBJECT, .object = (Object*)new NativeObject(fn, name, arity)})
+#define ALLOC_FUNCTION(co) ((VioValue){VioValueType::OBJECT, .object = (Object*)new FunctionObject(co)})
 
 // ----------------------------------------------------------------
 // Accessors:
@@ -251,7 +253,8 @@ struct FunctionObject : public Object {
 #define AS_CPPSTRING(evaValue) (AS_STRING(evaValue) -> string)
 #define AS_CODE(evaValue) ((CodeObject*)(evaValue).object)
 #define AS_NATIVE(evaValue) ((NativeObject*)(evaValue).object)
-#define AS_OBJECT(evaValue) ((Object*) (evaValue).number)
+#define AS_OBJECT(evaValue) ((Object*) (evaValue).object)
+#define AS_FUNCTION(evaValue) ((FunctionObject*)(evaValue).object)
 // ----------------------------------------------------------------
 // Testers:
 

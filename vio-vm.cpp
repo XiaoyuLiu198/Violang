@@ -6,8 +6,8 @@
 #include <iostream>
 #include <string>
 
-#include "src/Logger.h"
-#include "src/vm/VioValue.h"
+// #include "src/Logger.h"
+// #include "src/vm/VioValue.h"
 #include "src/vm/VioVM.h"
 
 void printHelp() {
@@ -21,6 +21,8 @@ void printHelp() {
  * Vio VM main executable.
  */
 int main(int argc, char const *argv[]) {
+  VioVM vm;
+
   if (argc != 3) {
     printHelp();
     return 0;
@@ -56,19 +58,52 @@ int main(int argc, char const *argv[]) {
     program = buffer.str();
   }
 
-  /**
-   * VM instance.
-   */
-  VioVM vm;
+  // auto result = vm.exec(R"(
+  //   // (def square (x) (* x x))
+  //   // (square 2)
+  //   (def factorial (x)
+  //     (if (== x 1)
+  //       1
+  //       (* x (factorial (- 1 x)))))
+  //   (factorial 5)
+  // )");
 
-  /**
-   * Violuation result.
-   */
+  // auto result = vm.exec(R"(
+
+  //   (var x 5)
+  //   (set x (+ x 10))
+  //   x
+  //   (begin 
+  //     (var z 100)
+  //     (begin
+  //       (var z 200)
+  //       (set x 700)
+  //       x)
+  //     x)
+  //   x
+  // )");
   auto result = vm.exec(program);
-
   std::cout << "\n";
+  // log(AS_CPPSTRING(result));
   log(result);
-  std::cout << "\n";
+  std::cout << "All done!\n";
+  
 
   return 0;
+
+  // /**
+  //  * VM instance.
+  //  */
+  // VioVM vm;
+
+  // /**
+  //  * Violuation result.
+  //  */
+  // auto result = vm.exec(program);
+
+  // std::cout << "\n";
+  // log(result);
+  // std::cout << "\n";
+
+  // return 0;
 }

@@ -10,7 +10,8 @@
 class ErrorLogMessage : public std::basic_ostringstream<char> {
  public:
   ~ErrorLogMessage() {
-    std::cerr << "Fatal error: " << str().c_str();
+    // std::cerr << "Fatal error: " << str().c_str();
+    fprintf(stderr, "Fatal error: %s\n", str().c_str());
     exit(EXIT_FAILURE);
   }
 };

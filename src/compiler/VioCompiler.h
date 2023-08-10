@@ -27,6 +27,7 @@
         }                                                 \
       }                                                   \
       co->constants.push_back(allocator(value));          \
+      return co->constants.size() - 1;                    \
     } while (false)
 
 // Generic binary operator
@@ -38,29 +39,37 @@
     for (auto i = 1; i < exp.list.size(); i++) {  \
       gen(exp.list[i]);                           \
     }                                             \
-    emit(OP_CALL);                                \ 
+    emit(OP_CALL);                                \
     emit(exp.list.size() - 1);                    \
   } while (false)                                 \
+
 /**
  * Compiler class, emits bytecode, records constant pool, vars, etc.
  */
 class VioCompiler {
  public:
-  VioCompiler(std::shared_ptr<Global> global)
-      : global(global),
-        disassembler(std::make_unique<VioDisassembler>(global)) {}
+  // VioCompiler(std::shared_ptr<Global> global)
+  //     : global(global),
+  //       disassembler(std::make_unique<VioDisassembler>(global)) {}
+  VioCompiler(std::shared_ptr<Global> global) 
+    : global(global), disassembler(std::make_unique<VioDisassembler>(global)) {}
 
   /**
    * Main compile API.
    */
-  void compile(const Exp& exp) {
+ void compile(const Exp& exp) {
+  // CodeObject* compile(const Exp& exp) {
     // allocate the new code object
-    co = AS_CODE(ALLOC_CODE("main", exp.list.size()));
-    // main = AS_FUNCTION(ALLOC_FUNCTION(co));
+    // co = AS_CODE(ALLOC_CODE("main", exp.list.size()));
+    // , exp.list.size())
+    co = AS_CODE(createCodeObjectValue("main"));
+    // co = AS_CODE(ALLOC_CODE("main"));
+    main = AS_FUNCTION(ALLOC_FUNCTION(co));
     // generate recursively from top-level
     gen(exp);
 
     emit(OP_HALT);
+    // return co;
   }
 
   /**
@@ -98,240 +107,315 @@ class VioCompiler {
           emit(OP_CONST);
           emit(booleanConstIdx(exp.string == "true" ? true : false));
         } else {
-          // Variables:
-          auto varName = exp.string; 
-
-          // 1. Local vars:
-          auto localIndex = co->getLocalIndex(varName);
-          if (localIndex != -1) {
-            emit(OP_GET_LOCAL);
-            emit(localIndex);
-          }
-          // 2. Global vars
-          else {
-            if (!global->exists(exp.string)) {
-              DIE << "[VioCompiler]: Reference error: " << exp.string;
-              }
-            emit(OP_GET_GLOBAL);
-            emit(global->getGlobalIndex(exp.string));
-          }
-        }
-        break;
+            // Variables:
+            auto varName = exp.string;
+            // 1. Local vars:
+            auto localIndex = co->getLocalIndex(varName);
+            if (localIndex != -1) {
+              emit(OP_GET_LOCAL);
+              emit(localIndex);
+            }
+            // 2. Global vars
+            else {
+              if (!global->exists(varName)) {
+                DIE << "[VioCompiler]: Reference error: " << varName;
+                }
+              emit(OP_GET_GLOBAL);
+              emit(global->getGlobalIndex(varName));
+         }
+       }
+          break;
 
       /**
        * ----------------------------------------------
        * Lists.
        */
       case ExpType::LIST:
-        auto tag = exp.list[0];
+        // break;
+       auto tag = exp.list[0];
 
-        /**
-         * ----------------------------------------------
-         * Special cases.
-         */
-        if (tag.type == ExpType::SYMBOL) {
-          auto op = tag.string;
+       /**
+        * ----------------------------------------------
+        * Special cases.
+        */
+       if (tag.type == ExpType::SYMBOL) {
+         auto op = tag.string;
 
-          if (op == "+") {
-            GEN_BINARY_OP(OP_ADD);
-          }
+        if (op == "+") {
+           GEN_BINARY_OP(OP_ADD);
+         }
 
-          else if (op == "-") {
-            GEN_BINARY_OP(OP_SUB);
-          }
+        else if (op == "-") {
+           GEN_BINARY_OP(OP_SUB);
+         }
 
-          else if (op == "*") {
-            GEN_BINARY_OP(OP_MUL);
-          }
+        else if (op == "*") {
+           GEN_BINARY_OP(OP_MUL);
+         }
 
-          else if (op == "/") {
-            GEN_BINARY_OP(OP_DIV);
-          }
+        else if (op == "/") {
+           GEN_BINARY_OP(OP_DIV);
+         }
 
-          else if (compareOps_.count(op) != 0) {
-            gen(exp.list[1]);
-            gen(exp.list[2]);
-            emit(OP_COMPARE);
-            emit(compareOps_[op]);
-          }
+        else if (compareOps_.count(op) != 0) {
+           gen(exp.list[1]);
+           gen(exp.list[2]);
+           emit(OP_COMPARE);
+           emit(compareOps_[op]);
+         }
+         
+        else if (op == "if") {
+           // emit test
+           gen(exp.list[1]);
 
-          else if (op == "if") {
-            // emit test
-            gen(exp.list[1]);
+           emit(OP_JMP_IF_FALSE);
 
-            emit(OP_JMP_IF_FALSE);
+           // Patch the else branch
+           emit(0);
+           emit(0);
 
-            // Patch the else branch
-            emit(0);
-            emit(0);
+           auto elseJmpAddr = getOffset() - 2;
 
-            auto elseJmpAddr = getOffset() - 2;
+           gen(exp.list[2]);
 
-            gen(exp.list[2]);
+           emit(OP_JMP);
+           emit(0);
+           emit(0);
 
-            emit(OP_JMP);
-            emit(0);
-            emit(0);
+           auto endAddr = getOffset() - 2;
 
-            auto endAddr = getOffset() - 2;
+           // Patch else branch address
+           auto elseBranchAddr = getOffset();
+           patchJumpAddress(elseJmpAddr, elseBranchAddr);
 
-            // Patch else branch address
-            auto elseBranchAddr = getOffset();
-            patchJumpAddress(elseJmpAddr, elseBranchAddr);
+           // emit <alternate> if exist
+           if (exp.list.size() == 4) {
+             gen(exp.list[3]);
+           }
 
-            // emit <alternate> if exist
-            if (exp.list.size() == 4) {
-              gen(exp.list[3]);
-            }
+           // patch the end
+           auto endBranchAddr = getOffset();
+           patchJumpAddress(endAddr, endBranchAddr);
+         }
+        else if (op == "while") {
+          auto loopStartAddr = getOffset();
 
-            // patch the end
-            auto endBranchAddr = getOffset();
-            patchJumpAddress(endAddr, endBranchAddr);
-          }
+          // emit condition
+          gen(exp.list[1]);
 
-          else if (op == "while") {
-            auto loopStartAddr = getOffset();
+          emit(OP_JMP_IF_FALSE);
+          emit(0);
+          emit(0);
 
-            // emit condition
-            gen(exp.list[1]);
-            
-            emit(OP_JMP_IF_FALSE);
-            emit(0);
-            emit(0);
+          auto lookEndJmpAddr = getOffset() - 2;
 
-            auto lookEndJmpAddr = getOffset() - 2;
+          gen(exp.list[2]);
+          emit(OP_JMP);
+          emit(0);
+          emit(0);
 
-            gen(exp.list[2]);
-            emit(OP_JMP);
-            emit(0);
-            emit(0);
+          patchJumpAddress(getOffset() - 2, loopStartAddr);
+          auto loopEndAddr = getOffset() + 1;
+          patchJumpAddress(lookEndJmpAddr, loopEndAddr);
 
-            patchJumpAddress(getOffset() - 2, loopStartAddr);
-            auto loopEndAddr = getOffset() + 1;
-            patchJumpAddress(lookEndJmpAddr, loopEndAddr);
+        }
 
-          }
-
-          // variable declaration
-          else if (op == "var") {
+         // variable declaration
+        else if (op == "var") {
             auto varName = exp.list[1].string;
+            gen(exp.list[2]);
 
-            // initialize
-            if (isLambda(exp.list[2])) {
-              compileFunction(
-                exp.list[2],
-                exp.list[1].string,
-                exp.list[2].list[1],
-                exp.list[2].list[2]
-                );
-            } else {
-              gen(exp.list[2]);
-            }
-
+            // 1. Global vars
             if (isGlobalScope()) {
-              // global variables
-              global->define(varName);
-              emit(OP_SET_GLOBAL);
-              emit(global->getGlobalIndex(exp.list[1].string));
+            global->define(varName);
+            emit(OP_SET_GLOBAL);
+            emit(global->getGlobalIndex(varName));
             }
-            else {
+            // 2. Local vars
+            else{
               co->addLocal(varName);
               emit(OP_SET_LOCAL);
               emit(co->getLocalIndex(varName));
             }
+        }
+
+        else if (op == "set") {
+          auto varName = exp.list[1].string;
+
+          gen(exp.list[2]);
+
+           // For local variables
+           auto localIndex = co->getLocalIndex(varName);
+
+           if (localIndex != -1) {
+             emit(OP_SET_LOCAL);
+             emit(localIndex);
+           }
+           else {
+            auto globalIndex = global->getGlobalIndex(varName);
+            if (globalIndex == -1) {
+              DIE << "Reference error: " << varName << " is not defined.";
+            }
+            emit(OP_SET_GLOBAL);
+            emit(globalIndex);
+           }
           }
 
-          else if (op == "set") {
-            auto varName = exp.list[1].string;
+        else if (op == "begin") {
+          scopeEnter();
+          // compile each expression within the block:
+          for (auto i=1; i < exp.list.size(); i++) {
+            // the value of the last expression is kept on the stack as final result
+            bool isLast = i == exp.list.size() - 1;
 
-            gen(exp.list[2]);
-            
-            // For local variables
-            auto localIndex = co->getLocalIndex(varName);
+            auto isLocalDeclaration = isDeclaration(exp.list[i]) && !isGlobalScope();
 
-            if (localIndex != -1) {
-              emit(OP_SET_LOCAL);
-              emit(localIndex);
-            }
-            else {
-              auto globalIndex = global->getGlobalIndex(varName);
-              if (globalIndex == -1) {
-                DIE << "Reference error: " << varName << " is not defined.";
-              }
-              emit(OP_SET_GLOBAL);
-              emit(globalIndex);
-            }
+            // generate expression code
+            gen(exp.list[i]);
 
-            
+            if (!isLast && !isLocalDeclaration) {
+              emit(OP_POP);
+             }
+          }
+          scopeExit();
+          }
+        
+        else if (op=="def") {
+          auto fnName = exp.list[1].string;
+          auto params = exp.list[2].list;
+          auto arity = params.size();
+
+          // compileFunction(
+          //   exp,
+          //   exp.list[1].string,
+          //   exp.list[2],
+          //   exp.list[3]
+          // );
+          auto prevCo = co;
+          auto coValue = createCodeObjectValue(fnName, arity);
+          co = AS_CODE(coValue);
+
+          prevCo->constants.push_back(coValue); // store as a new constant
+          co->addLocal(fnName); //register function name as local variable to enable calling recursively
+
+
+          for (auto i = 0; i < arity; i++) {
+            auto argName = params[i].string;
+            co->addLocal(argName);
           }
 
-          else if (op == "begin") {
-            scopeEnter();
-            // compile each expression within the block:
-            for (auto i=1; i < exp.list.size(); i++) {
-              // the value of the last expression is kept on the stack as final result
-              bool isLast = i == exp.list.size() - 1;
-
-              auto isLocalDeclaration = isDeclaration(exp.list[i]) && !isGlobalScope();
-
-              // generate expression code
-              gen(exp.list[i]);
-
-              if (!isLast) {
-                emit(OP_POP);  
-              }
-            }
-            // scopeExit();
+          gen(exp.list[3]);
+          if (!isBlock(exp.list[3])) {
+            emit(OP_SCOPE_EXIT);
+            emit(arity + 1); // +1 for function itself to be set as a local
           }
+          emit(OP_RETURN); // explicit return to restore caller address
 
-          else if (op=="def") {
-            auto fnName = exp.list[1].string;
+          auto fn = ALLOC_FUNCTION(co);
+          co=prevCo;
+          co->addConst(fn);
 
-            compileFunction(
-              exp,
-              exp.list[1].string,
-              exp.list[2],
-              exp.list[3],
-            );
+          // emit code for new constant
+          emit(OP_CONST);
+          emit(co->constants.size()-1); 
 
-            if (isGlobalScope()) {
-              global->define(fnName);
-              emit(OP_SET_GLOBAL);
-              emit(global->getGlobalIndex(fnName));
-            } else {
-              co->addLocal(fnName);
-              emit(OP_SET_LOCAL);
-              emit(co->getLocalIndex(fnName));
-            }
-          } 
 
-          else if (op == "lambda") {
-            compileFunction(
-              exp,
-              "lambda",
-              exp.list[2],
-              exp.list[3],
-            );
-          }
-
-          // Functional call
-          else {
-            FUNCTION_CALL(exp);
+          if (isGlobalScope()) {
+            global->define(fnName);
+            emit(OP_SET_GLOBAL);
+            emit(global->getGlobalIndex(fnName));
+          } else {
+            co->addLocal(fnName);
+            emit(OP_SET_LOCAL);
+            emit(co->getLocalIndex(fnName));
           }
         }
 
-
-        // --------------------------------------------
-        // Lambda function calls:
-        // ((lambda (x) (* x x)) 2)
-
+        // function calls
         else {
-          // Implement here...
+          // push function onto stack
+          FUNCTION_CALL(exp);
+          }
+          
         }
-
         break;
+      }
     }
-  }
+        //    auto varName = exp.list[1].string;
+
+        //    // initialize
+        //    if (isLambda(exp.list[2])) {
+        //      compileFunction(
+        //        exp.list[2],
+        //        exp.list[1].string,
+        //        exp.list[2].list[1],
+        //        exp.list[2].list[2]
+        //        );
+        //    } else {
+        //      gen(exp.list[2]);
+        //    }
+
+        //    if (isGlobalScope()) {
+        //      // global variables
+        //      global->define(varName);
+        //      emit(OP_SET_GLOBAL);
+        //      emit(global->getGlobalIndex(exp.list[1].string));
+        //    }
+        //    else {
+        //      co->addLocal(varName);
+        //      emit(OP_SET_LOCAL);
+        //      emit(co->getLocalIndex(varName));
+        //    }
+        //  }
+//
+//          else if (op=="def") {
+//            auto fnName = exp.list[1].string;
+//
+//            compileFunction(
+//              exp,
+//              exp.list[1].string,
+//              exp.list[2],
+//              exp.list[3]
+//            );
+//
+//            if (isGlobalScope()) {
+//              global->define(fnName);
+//              emit(OP_SET_GLOBAL);
+//              emit(global->getGlobalIndex(fnName));
+//            } else {
+//              co->addLocal(fnName);
+//              emit(OP_SET_LOCAL);
+//              emit(co->getLocalIndex(fnName));
+//            }
+//          }
+//
+//          else if (op == "lambda") {
+//            compileFunction(
+//              exp,
+//              "lambda",
+//              exp.list[2],
+//              exp.list[3]
+//            );
+//          }
+//
+//          // Functional call
+//          else {
+//            FUNCTION_CALL(exp);
+//          }
+      //  }
+//
+//
+//        // --------------------------------------------
+//        // Lambda function calls:
+//        // ((lambda (x) (* x x)) 2)
+//
+//        else {
+//          // Implement here...
+//        }
+
+  //       break;
+  //   }
+  // }
 
   /**
    * Disassemble code objects.
@@ -340,6 +424,7 @@ class VioCompiler {
     for (auto& co_ : codeObjects_) {
       disassembler->disassemble(co_);
     }
+    // disassembler->disassemble(co);
   }
 
   /**
@@ -350,7 +435,7 @@ class VioCompiler {
   /**
    * Returns all constant traceable objects.
    */
-  std::set<Traceable*>& getConstantObjects() { return constantObjects_; }
+  // std::set<Traceable*>& getConstantObjects() { return constantObjects_; }
 
  private:
   /**
@@ -371,19 +456,19 @@ class VioCompiler {
   /**
    * Exits a new scope
    */
-  // void scopeExit() { 
-  //   auto varsCount = getVarsCountOnScopeExit();
+  void scopeExit() { 
+    auto varsCount = getVarsCountOnScopeExit();
 
-  //   if (varsCount > 0 || co->arity > 0) {
-  //     emit(OP_SCOPE_EXIT);
+    if (varsCount > 0 || co->arity > 0) {
+      emit(OP_SCOPE_EXIT);
 
-  //     if (isFunctionBody()) {
-  //       varsCount+= co->arity+1;
-  //     }
-  //     emit(varsCount);
-  //   }
-  //   co->scopeLevel--; 
-  // }
+      if (isFunctionBody()) {
+        varsCount+= co->arity+1;
+      }
+      emit(varsCount);
+    }
+    co->scopeLevel--; 
+  }
 
   /**
    * Compiles a function.
@@ -414,6 +499,7 @@ class VioCompiler {
     emit(OP_RETURN); // explicit return to restore caller address
 
     auto fn = ALLOC_FUNCTION(co);
+    co=prevCo;
     co->constants.push_back(fn);
 
     // emit code for new constant
@@ -428,7 +514,7 @@ class VioCompiler {
     auto coValue = ALLOC_CODE(name, arity);
     auto co = AS_CODE(coValue);
     codeObjects_.push_back(co);
-    constantObjects_.insert((Traceable*)co);
+    // constantObjects_.insert((Traceable*)co);
     return coValue;
   }
 
@@ -440,9 +526,9 @@ class VioCompiler {
   /**
    * Exits a block.
    */
-  void blockExit() {
-    // Implement here...
-  }
+  // void blockExit() {
+  //   // Implement here...
+  // }
 
   /**
    * Whether it's the global scope.
@@ -458,19 +544,20 @@ class VioCompiler {
    * Whether the expression is a declaration.
    */
   bool isDeclaration(const Exp& exp) {
-    return isVarDeclaration(exp) || isFunctionDeclaration(exp) ||
-           isClassDeclaration(exp);
+    return isVarDeclaration(exp);
+    // return isVarDeclaration(exp) || isFunctionDeclaration(exp) ||
+    //        isClassDeclaration(exp);
   }
 
   /**
    * (class ...)
    */
-  bool isClassDeclaration(const Exp& exp) { return isTaggedList(exp, "class"); }
+  // bool isClassDeclaration(const Exp& exp) { return isTaggedList(exp, "class"); }
 
   /**
    * (prop ...)
    */
-  bool isProp(const Exp& exp) { return isTaggedList(exp, "prop"); }
+  // bool isProp(const Exp& exp) { return isTaggedList(exp, "prop"); }
 
   /**
    * (var <name> <value>)
@@ -535,8 +622,8 @@ class VioCompiler {
    * Allocates a string constant.
    */
   size_t stringConstIdx(const std::string& value) {
-    ALLOC_STRING(IS_STRING, AS_CPPSTRING, ALLOC_STRING, value);
-    constantObjects_.insert((Traceable*)co->constants.back().object);
+    ALLOC_CONST(IS_STRING, AS_CPPSTRING, ALLOC_STRING, value);
+    // constantObjects_.insert((Traceable*)co->constants.back().object);
     return co->constants.size() - 1;
   }
 
@@ -571,9 +658,9 @@ class VioCompiler {
   /**
    * Returns a class object by name.
    */
-  ClassObject* getClassByName(const std::string& name) {
-    // Implement here...
-  }
+  // ClassObject* getClassByName(const std::string& name) {
+  //   // Implement here...
+  // }
 
   // /**
   //  * Scope info.
@@ -608,12 +695,12 @@ class VioCompiler {
   /**
    * Currently compiling class object.
    */
-  ClassObject* classObject_;
+  // ClassObject* classObject_;
 
   /**
    * All class objects.
    */
-  std::vector<ClassObject*> classObjects_;
+  // std::vector<ClassObject*> classObjects_;
 
   /**
    * Compare ops map.

@@ -39,11 +39,12 @@ struct Global {
   /**
    * Adds a global constant.
    */
-  void addConst(const std::string& name, double value) {
+  void addGlobal(const std::string& name, double value) {
     if (exists(name)) {
       return;
     }
     globals.push_back({name, NUMBER(value)});
+    // (GlobalVar)
   }
 
   /**
@@ -77,7 +78,7 @@ struct Global {
     }
 
     // Set to default number
-    globals.push_back({name, NUMBER(0)});
+    globals.push_back((GlobalVar){name, NUMBER(0)});
   }
 
     /**
@@ -88,6 +89,7 @@ struct Global {
     if (exists(name)) {
       return;
     }
+    // (GlobalVar)
     globals.push_back({name, ALLOC_NATIVE(fn, name, arity)});
   }
 

@@ -14,7 +14,7 @@ struct VioCollector {
    */
   void gc(const std::set<Traceable *> &roots) {
     mark(roots);
-    sweep()
+    sweep();
   }
 
   /**
@@ -42,13 +42,14 @@ struct VioCollector {
   std::set<Traceable *> getPointers(const Traceable *object) {
     std::set<Traceable*> pointers;
 
-    auto vioValue = OBJECT((Object*)object);
-    if (IS_FUNCTION(vioValue)) {
-      auto fn = AS_FUNCTION(vioValue);
-      for (auto &cell: fn->cells) {
-        pointers.insert((Traceable*)cell);
-      }
-    }
+    // auto vioValue = OBJECT((Object*)object);
+    // if (IS_FUNCTION(vioValue)) {
+    //   auto fn = AS_FUNCTION(vioValue);
+    //   for (auto &cell: fn->cells) {
+    //     pointers.insert((Traceable*)cell);
+    //   }
+    // }
+    return pointers;
   }
 
   /**

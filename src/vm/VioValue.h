@@ -65,7 +65,7 @@ struct Traceable {
    */
   static void operator delete(void* object, std::size_t sz) {
     Traceable::bytesAllocated -= ((Traceable*)object)->size;
-    ::operator delete(object, sz);
+    // ::operator delete(object, sz);
   }
 
   /**
@@ -92,19 +92,23 @@ struct Traceable {
 /**
  * Total bytes allocated.
  */
-size_t Traceable::bytesAllocated{0};
+// size_t Traceable::bytesAllocated {0};
 
 /**
  * List of all allocated objects.
  */
-std::list<Traceable*> Traceable::objects{};
+// std::list<Traceable*> Traceable::objects {};
 
 // ----------------------------------------------------------------
 
 /**
  * Base object.
  */
-struct Object : public Traceable {
+// struct Object : public Traceable {
+//   Object(ObjectType type) : type(type) {}
+//   ObjectType type;
+// };
+struct Object {
   Object(ObjectType type) : type(type) {}
   ObjectType type;
 };
@@ -158,18 +162,18 @@ struct VioValue {
 /**
  * Class object.
  */
-struct ClassObject : public Object {
-  // Implement here...
-};
+// struct ClassObject : public Object {
+//   // Implement here...
+// };
 
 // ----------------------------------------------------------------
 
 /**
  * Instance object.
  */
-struct InstanceObject : public Object {
-  // Implement here...
-};
+// struct InstanceObject : public Object {
+//   // Implement here...
+// };
 
 // ----------------------------------------------------------------
 
@@ -185,12 +189,13 @@ struct LocalVar {
  * state needed for function execution.
  */
 struct CodeObject : public Object {
-  CodeObject(const std::string& name, const int arity) : Object(ObjectType::CODE), name(name), arity(arity) {}
+  // CodeObject(const std::string& name, const int arity) : Object(ObjectType::CODE), name(name), arity(arity) {}
+  CodeObject(const std::string& name, size_t arity) : Object(ObjectType::CODE), name(name), arity(arity) {}
 
   std::string name;
   std::vector<VioValue> constants;
-  std::vector<uin8_t> code;
-  int arity;
+  std::vector<uint8_t> code;
+  size_t arity;
 
   size_t scopeLevel = 0;
 
@@ -198,10 +203,16 @@ struct CodeObject : public Object {
 
   void addLocal(const std::string& name) {
     locals.push_back({name, scopeLevel});
+    // (LocalVar)
+  }
+
+  void addConst(const VioValue& value) {
+    constants.push_back(value);
   }
 
   int getLocalIndex(const std::string& name) {
-    if (name.size() > 0) {
+    // if (globals.size() > 0) {
+    if (locals.size() > 0) {
       for (auto i = (int)locals.size() - 1; i >= 0; i--) {
         if (locals[i].name == name) {
           return i;
@@ -219,9 +230,9 @@ struct CodeObject : public Object {
  *
  * Used to capture closured variables.
  */
-struct CellObject : public Object {
-  // Implement here...
-};
+// struct CellObject : public Object {
+//   // Implement here...
+// };
 
 // ----------------------------------------------------------------
 
@@ -230,6 +241,7 @@ struct CellObject : public Object {
  */
 struct FunctionObject : public Object {
   FunctionObject(CodeObject* co) : Object(ObjectType::FUNCTION), co(co) {}
+  // reference to code object
   CodeObject* co;
 };
 
@@ -237,53 +249,61 @@ struct FunctionObject : public Object {
 // Constructors:
 
 #define NUMBER(value) ((VioValue){VioValueType::NUMBER, .number = value})
+#define BOOLEAN(value) ((VioValue){VioValueType::BOOLEAN, .boolean = value})
 
 #define ALLOC_STRING(value) ((VioValue){VioValueType::OBJECT, .object = (Object*) new StringObject(value)})
 
 #define ALLOC_CODE(name, arity) ((VioValue){VioValueType::OBJECT, .object = (Object*) new CodeObject(name, arity)})
+// #define ALLOC_CODE(name) ((VioValue){VioValueType::OBJECT, .object = (Object*) new CodeObject(name)})
 #define ALLOC_NATIVE(fn, name, arity) ((VioValue){VioValueType::OBJECT, .object = (Object*)new NativeObject(fn, name, arity)})
 #define ALLOC_FUNCTION(co) ((VioValue){VioValueType::OBJECT, .object = (Object*)new FunctionObject(co)})
 
 // ----------------------------------------------------------------
 // Accessors:
 
-#define AS_NUMBER(evaValue) ((double)(evaValue).number)
-#define AS_BOOLEAN(evaValue) ((bool)(evaValue).boolean)
-#define AS_STRING(evaValue) ((StringObject*)(evaValue).object)
-#define AS_CPPSTRING(evaValue) (AS_STRING(evaValue) -> string)
-#define AS_CODE(evaValue) ((CodeObject*)(evaValue).object)
-#define AS_NATIVE(evaValue) ((NativeObject*)(evaValue).object)
-#define AS_OBJECT(evaValue) ((Object*) (evaValue).object)
-#define AS_FUNCTION(evaValue) ((FunctionObject*)(evaValue).object)
+#define AS_NUMBER(value) ((double)(value).number)
+#define AS_BOOLEAN(value) ((bool)(value).boolean)
+#define AS_STRING(value) ((StringObject*)(value).object)
+#define AS_CPPSTRING(value) (AS_STRING(value) -> string)
+#define AS_CODE(value) ((CodeObject*)(value).object)
+#define AS_NATIVE(value) ((NativeObject*)(value).object)
+#define AS_OBJECT(value) ((Object*) (value).object)
+#define AS_FUNCTION(value) ((FunctionObject*)(value).object)
 // ----------------------------------------------------------------
 // Testers:
 
-#define IS_OBJECT_TYPE(evaValue, objectType) IS_OBJECT(evaValue)
-#define IS_OBJECT(evaValue) ((evaValue).type == VioValueType::OBJECT)
+#define IS_OBJECT_TYPE(value, objectType) \
+  (IS_OBJECT(value) && AS_OBJECT(value)->type==objectType)
 
-#define IS_NUMBER(evaValue) ((evaValue).type == VioValueType::NUMBER)
-#define IS_BOOLEAN(evaValue) ((evaValue).type == VioValueType::BOOLEAN)
-#define IS_STRING(evaValue) IS_OBJECT_TYPE(evaValue, ObjectType::STRING)
-#define IS_CODE(evaValue) IS_OBJECT_TYPE(evaValue, ObjectType::CODE)
-#define IS_NATIVE(evaValue) IS_OBJECT_TYPE(evaValue, ObjectType::NATIVE)
-// Implement here...
+#define IS_OBJECT(value) ((value).type == VioValueType::OBJECT)
+
+#define IS_NUMBER(value) ((value).type == VioValueType::NUMBER)
+#define IS_BOOLEAN(value) ((value).type == VioValueType::BOOLEAN)
+#define IS_STRING(value) IS_OBJECT_TYPE(value, ObjectType::STRING)
+#define IS_CODE(value) IS_OBJECT_TYPE(value, ObjectType::CODE)
+#define IS_NATIVE(value) IS_OBJECT_TYPE(value, ObjectType::NATIVE)
+#define IS_FUNCTION(value) IS_OBJECT_TYPE(value, ObjectType::FUNCTION)
 
 // ----------------------------------------------------------------
 
 /**
  * String representation used in constants for debug.
  */
-std::string evaValueToTypeString(const VioValue& evaValue) {
-  if (IS_NUMBER(evaValue)) {
+std::string vioValueToTypeString(const VioValue& vioValue) {
+  if (IS_NUMBER(vioValue)) {
     return "NUMBER";
-  } else if (IS_BOOLEAN(evaValue)) {
+  } else if (IS_BOOLEAN(vioValue)) {
     return "BOOLEAN";
-  } else if (IS_STRING(evaValue)) {
+  } else if (IS_STRING(vioValue)) {
     return "STRING";
-  } else if (IS_CODE(evaValue)) {
+  } else if (IS_CODE(vioValue)) {
     return "CODE";
+  } else if (IS_NATIVE(vioValue)) {
+    return "NATIVE";
+  } else if (IS_FUNCTION(vioValue)) {
+    return "FUNCTION";
   } else {
-    DIE << "evaValueToTypeString unkown type " << (int)evaValue.type;
+    DIE << "vioValueToTypeString unkown type " << (int)vioValue.type;
   }
   return "";
 }
@@ -291,19 +311,25 @@ std::string evaValueToTypeString(const VioValue& evaValue) {
 /**
  * String representation used in constants for debug.
  */
-std::string evaValueToConstantString(const VioValue& evaValue) {
+std::string vioValueToConstantString(const VioValue& vioValue) {
   std::stringstream ss;
-  if (IS_NUMBER(evaValue)) {
-    ss << evaValue.number;
-  } else if (IS_BOOLEAN(evaValue)) {
-    ss << (evaValue.boolean == true ? "true" : "false");
-  } else if (IS_STRING(evaValue)) {
-    ss << '"' << AS_CPPSTRING(evaValue) << '"';
-  } else if (IS_CODE(evaValue)) {
-    auto code = AS_CODE(evaValue);
-    ss << "code" << code << ": " << code->name;
+  if (IS_NUMBER(vioValue)) {
+    ss << vioValue.number;
+  } else if (IS_BOOLEAN(vioValue)) {
+    ss << (vioValue.boolean == true ? "true" : "false");
+  } else if (IS_STRING(vioValue)) {
+    ss << '"' << AS_CPPSTRING(vioValue) << '"';
+  } else if (IS_CODE(vioValue)) {
+    auto code = AS_CODE(vioValue);
+    ss << "code" << code << ": " << code->name << "/" << code->arity;
+  } else if (IS_FUNCTION(vioValue)) {
+    auto fn = AS_FUNCTION(vioValue);
+    ss << fn->co->name << "/" << fn->co->arity;
+  } else if (IS_NATIVE(vioValue)) {
+    auto fn = AS_NATIVE(vioValue);
+    ss << fn->name << "/" << fn->arity;
   } else {
-    DIE << "evaValueToConstantString unkown type " << (int)evaValue.type;
+    DIE << "vioValueToConstantString unkown type " << (int)vioValue.type;
   }
   return ss.str();
 }
@@ -311,9 +337,9 @@ std::string evaValueToConstantString(const VioValue& evaValue) {
 /**
  * Output stream.
  */
-std::ostream& operator<<(std::ostream& os, const VioValue& evaValue) {
-  return os << "VioValue (" << evaValueToTypeString(evaValue)
-            << "): " << evaValueToConstantString(evaValue);
+std::ostream& operator<<(std::ostream& os, const VioValue& vioValue) {
+  return os << "VioValue (" << vioValueToConstantString(vioValue)
+            << "): " << vioValueToConstantString(vioValue);
 }
 
 #endif

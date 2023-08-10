@@ -85,6 +85,7 @@
 std::string opcodeToString(uint8_t opcode) {
   switch (opcode) {
     OP_STR(HALT);
+    OP_STR(CONST);
     OP_STR(ADD);
     OP_STR(SUB);
     OP_STR(MUL);
@@ -94,9 +95,15 @@ std::string opcodeToString(uint8_t opcode) {
     OP_STR(JMP);
     OP_STR(GET_GLOBAL);
     OP_STR(SET_GLOBAL);
+    OP_STR(POP);
+    OP_STR(GET_LOCAL);
+    OP_STR(SET_LOCAL);
+    OP_STR(SCOPE_EXIT);
+    OP_STR(CALL);
+    OP_STR(RETURN);
 
     default:
-      DIE << "opcodeToString: unkown opcode: " << (int)opcode;
+      DIE << "opcodeToString: unkown opcode: " << std::hex << (int)opcode;
   }
   return "Unknown";
 }

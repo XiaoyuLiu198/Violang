@@ -13,10 +13,10 @@
 #include "../Logger.h"
 #include "../bytecode/OpCode.h"
 #include "../compiler/VioCompiler.h"
-#include "../gc/VioCollector.h"
+// #include "../gc/VioCollector.h"
 #include "../parser/VioParser.h"
 #include "VioValue.h"
-#include "Global.h"
+// #include "Global.h"
 
 using syntax::VioParser;
 
@@ -47,28 +47,42 @@ using syntax::VioParser;
 /**
  * Memory threshold after which GC is triggered.
  */
-#define GC_TRESHOLD 1024
+// #define GC_TRESHOLD 1024
 
 /**
  * Runtime allocation, can call GC.
  */
-#define MEM(allocator, ...)  (maybeGC(), allocator(__VA_ARGS__))
+// #define MEM(allocator, ...)  (maybeGC(), allocator(__VA_ARGS__))
 
 /**
  * Binary operation.
  */
-#define BINARY_OP(op) \
-  do {\
-    auto op2 = AS_NUMBER(pop()); \
-    auto op1 = AS_NUMBER(pop()); \
-    push(NUMBER(op1 op op2)); \
+#define BINARY_OP(op)                         \
+  do {                                        \
+      auto op1 = pop();                       \
+      auto op2 = pop();                       \
+      if (IS_NUMBER(op1) && IS_NUMBER(op2)) { \
+        auto v2 = AS_NUMBER(op2);             \
+        auto v1 = AS_NUMBER(op1);             \
+        push(NUMBER(v1 op v2));\
+      }                                       \
+      else if (IS_STRING(op1) && IS_STRING(op2)) {  \
+        auto s1 = AS_CPPSTRING(op2);                \
+        auto s2 = AS_CPPSTRING(op1);                \
+        push(ALLOC_STRING(s1 + s2));                \
+      }                                             \
   } while (false)
+
+// push(MEM(ALLOC_STRING(s1 + s2))); 
+// auto op2 = AS_NUMBER(pop()); \
+//     auto op1 = AS_NUMBER(pop()); \
+//     push(NUMBER(op1 op op2)); \
 
 /**
  * Generic values comparison.
  */
 #define COMPARE_VALUES(op, v1, v2)  \
-  do {                              \ 
+  do {                              \
     bool res;                       \
     switch (op) {                   \
       case 0:                       \
@@ -90,7 +104,7 @@ using syntax::VioParser;
         res = v1 != v2;             \
         break;                      \
     }                               \
-    push(AS_BOOLEAN(res));             \
+    push(BOOLEAN(res));             \
   } while (false)
 
 // --------------------------------------------------
@@ -111,18 +125,22 @@ struct Frame {
  */
 class VioVM {
  public:
-  VioVM()
-      : global(std::make_shared<Global>()),
-        parser(std::make_unique<VioParser>()),
-        compiler(std::make_unique<VioCompiler>(global)),
-        collector(std::make_unique<VioCollector>()) {
-    setGlobalVariables();
-  }
+  VioVM() : 
+            global(std::make_shared<Global>()),
+            parser(std::make_unique<VioParser>()), 
+            compiler(std::make_unique<VioCompiler>(global)) {setGlobalVariables();}
+  // parser(std::make_unique<VioParser>) 
+  //     : global(std::make_shared<Global>()),
+  //       parser(std::make_unique<VioParser>()),
+  //       compiler(std::make_unique<VioCompiler>(global)),
+  //       collector(std::make_unique<VioCollector>()) {
+    
+  // }
 
   /**
    * VM shutdown.
    */
-  ~VioVM() { Traceable::cleanup(); }
+  // ~VioVM() { Traceable::cleanup(); }
 
   //----------------------------------------------------
   // Stack operations:
@@ -175,66 +193,66 @@ class VioVM {
   /**
    * Obtains GC roots: variables on the stack, globals, constants.
    */
-  std::set<Traceable*> getGCRoots() {
-    auto roots = getStackGCRoots();
+  // std::set<Traceable*> getGCRoots() {
+  //   auto roots = getStackGCRoots();
 
-    auto constantRoots = getConstantGCRoots();
-    roots.insert(constantRoots.begin(), constantRoots.end());
+  //   auto constantRoots = getConstantGCRoots();
+  //   roots.insert(constantRoots.begin(), constantRoots.end());
 
-    auto globalRoots = getGlobalGCRoots();
-    roots.insert(globalRoots.begin(), globalRoots.end());
+  //   auto globalRoots = getGlobalGCRoots();
+  //   roots.insert(globalRoots.begin(), globalRoots.end());
 
-    return roots;
-  }
+  //   return roots;
+  // }
 
   /**
    * Returns stack GC roots.
    */
-  std::set<Traceable*> getStackGCRoots() {
-    std::set<Traceable*> roots;
-    auto stackEntry = sp;
-    while (stackEntry-- != stack.begin()) {
-      if (IS_OBJECT(*stackEntry)) {
-        roots.insert((Traceable*)stackEntry->object);
-      }
-    }
-    return roots;
-  }
+  // std::set<Traceable*> getStackGCRoots() {
+  //   std::set<Traceable*> roots;
+  //   auto stackEntry = sp;
+  //   while (stackEntry-- != stack.begin()) {
+  //     if (IS_OBJECT(*stackEntry)) {
+  //       roots.insert((Traceable*)stackEntry->object);
+  //     }
+  //   }
+  //   return roots;
+  // }
 
   /**
    * Returns GC roots for constants.
    */
-  std::set<Traceable*> getConstantGCRoots() {
-    return compiler->getConstantObjects();
-  }
+  // std::set<Traceable*> getConstantGCRoots() {
+  //   return compiler->getConstantObjects();
+  // }
 
   /**
    * Returns global GC roots.
    */
-  std::set<Traceable*> getGlobalGCRoots() {
-    std::set<Traceable*> roots;
-    for (const auto& global : global->globals) {
-      if (IS_OBJECT(global.value)) {
-        roots.insert((Traceable*)global.value.object);
-      }
-    }
-    return roots;
-  }
+  // std::set<Traceable*> getGlobalGCRoots() {
+  //   std::set<Traceable*> roots;
+  //   for (const auto& global : global->globals) {
+  //     if (IS_OBJECT(global.value)) {
+  //       roots.insert((Traceable*)global.value.object);
+  //     }
+  //   }
+  //   return roots;
+  // }
 
   /**
    * Spawns a potential GC cycle.
    */
-  void maybeGC() {
-    if (Traceable::bytesAllocated < GC_TRESHOLD) {
-      return;
-    }
+  // void maybeGC() {
+  //   if (Traceable::bytesAllocated < GC_TRESHOLD) {
+  //     return;
+  //   }
 
-    auto roots = getGCRoots();
-    if (roots.size() == 0) {
-      return;
-    }
-    collector->gc(roots);
-  }
+  //   auto roots = getGCRoots();
+  //   if (roots.size() == 0) {
+  //     return;
+  //   }
+  //   collector->gc(roots);
+  // }
 
   //----------------------------------------------------
   // Program execution
@@ -248,12 +266,15 @@ class VioVM {
 
     // 2. Compile program to bytecode
     compiler->compile(ast);
+    // co = compiler->compile(ast); 
+    
 
     // Start from the main entry point:
     fn = compiler->getMainFunction();
 
     // Set instruction pointer to the beginning:
-    ip = &fn ->co->code[0];
+    ip = &fn->co->code[0];
+    // ip = &co->code[0];
 
     // Init the stack:
     sp = &stack[0];
@@ -262,7 +283,12 @@ class VioVM {
     bp = sp;
 
     compiler->disassembleBytecode();
-
+    // constants.push_back(ALLOC_STRING("Hello "));
+    // constants.push_back(ALLOC_STRING("wORLD"));
+    // constants.push_back(NUMBER(42));
+    // constants.push_back(NUMBER(35));
+    // code = {OP_CONST, 0, OP_CONST, 1, OP_ADD, OP_HALT};
+    // code = {OP_CONST, 0, OP_HALT};
     return eval();
   }
 
@@ -271,11 +297,13 @@ class VioVM {
    */
   VioValue eval() {
     for (;;) {
+      dumpStack();
       auto opcode = READ_BYTE();
-      switch (READ_BYTE()) {
+      switch (opcode) {
 
         case OP_HALT: {
           return pop();
+          // return;
         }
 
         case OP_CONST: {
@@ -285,19 +313,7 @@ class VioVM {
 
         // math operations
         case OP_ADD: {
-          auto op1 = pop();
-          auto op2 = pop();
-
-          if (IS_NUMBER(op1) && IS_NUMBER(op2)) {
-            auto v2 = AS_NUMBER(op2); 
-            auto v1 = AS_NUMBER(op1); 
-            push(NUMBER(v1 + v2)); 
-          }
-          else if (IS_STRING(op1) && IS_STRING(op2)) {
-            auto s1 = AS_CPPSTRING(op1); 
-            auto s2 = AS_CPPSTRING(op2);
-            push(MEM(ALLOC_STRING(s1 + s2)));
-          }
+          BINARY_OP(+);
           break;
         }
 
@@ -326,8 +342,8 @@ class VioVM {
             auto v2 = AS_NUMBER(op2);
             COMPARE_VALUES(op, v1, v2);
           } else if (IS_STRING(op1) && IS_STRING(op2)) {
-            auto s1 = AS_STRING(op1);
-            auto s2 = AS_STRING(op2);
+            auto s1 = AS_CPPSTRING(op1);
+            auto s2 = AS_CPPSTRING(op2);
             COMPARE_VALUES(op, s1, s2);
           }
           break;
@@ -361,9 +377,10 @@ class VioVM {
           break;
         }
 
-        case OP_POP:
+        case OP_POP: {
           pop();
           break;
+        }
 
         case OP_GET_LOCAL: {
           auto localIndex = READ_BYTE();
@@ -387,6 +404,7 @@ class VioVM {
         case OP_SCOPE_EXIT: {
           auto count = READ_BYTE();
 
+          // Move the result above the vars
           *(sp - 1 - count) = peek(0);
           popN(count);
           break;
@@ -406,7 +424,7 @@ class VioVM {
             break;
           }
 
-          // user defined funciton
+          // User-defined function
           auto callee = AS_FUNCTION(fnValue);
           // save the execution context, restored on OP_RETURN
           callStack.push(Frame{ip, bp, fn});
@@ -416,10 +434,11 @@ class VioVM {
           bp = sp - argsCount - 1;
           // jump to the function code
           ip = &callee->co->code[0];
+          
+          break;
         }
 
-        case OP_RETURN:
-          {
+        case OP_RETURN: {
           // restore the caller address
           auto callerFrame = callStack.top();
 
@@ -430,7 +449,7 @@ class VioVM {
 
           callStack.pop();
           break;
-          }
+        }
 
         default:
           DIE << "Unknown opcode: " << std::hex << opcode;
@@ -443,14 +462,18 @@ class VioVM {
    */
   void setGlobalVariables() {
     global->addNativeFunction(
-      "square",
+      "native-square",
       [&]() {
         auto x = AS_NUMBER(peek(0));
         push(NUMBER(x * x));
       },
-      1);
+    1);
 
-    global->addConst("VERSION", 1);
+    // global->addConst("VERSION", 1);
+    // global->define("x");
+    // global->set(0, NUMBER(10));
+    // global->addGlobal("x", 10);
+    global->addGlobal("y", 20);
   }
 
   /**
@@ -472,7 +495,7 @@ class VioVM {
   /**
    * Garbage collector.
    */
-  std::unique_ptr<VioCollector> collector;
+  // std::unique_ptr<VioCollector> collector;
 
   /**
    * Instruction pointer (aka Program counter).
@@ -494,6 +517,8 @@ class VioVM {
    */
   std::array<VioValue, STACK_LIMIT> stack;
 
+  std::vector<VioValue> constants;
+
   /**
    * Separate stack for calls. Keeps return addresses.
    */
@@ -503,6 +528,24 @@ class VioVM {
    * Currently executing function.
    */
   FunctionObject* fn;
+
+  std::vector<uint8_t> code;
+  // CodeObject* co;
+
+  /**
+   * Dumps current stack
+   */
+  void dumpStack() {
+    std::cout << "\n---stack---\n";
+    if (sp==stack.begin()) {
+      std::cout << "(empty)";
+    }
+    auto csp = sp - 1;
+    while (csp >= stack.begin()) {
+      std::cout << *csp-- << "\n";
+    }
+    std::cout << "\n";
+  }
 
 };
 

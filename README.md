@@ -53,3 +53,11 @@ In ```sweeping``` phase, the garbage collector performs a cleanup operation. The
 
 ## Continuing...
 Supporting of scoped names binding via closure, and supporting of OOP is in-progress ...
+
+### Testing
+```
+clang++ -std=c++17 -Wall -ggdb3 ./vio-vm.cpp -o ./vio-vm
+./vio-vm -e [program]
+```
+
+Eg: ``` ./vio-vm -e "(def square (x) (* x x)) (square 2)" ```
